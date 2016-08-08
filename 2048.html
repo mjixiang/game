@@ -28,6 +28,7 @@
 		<ul>
 			<li v-for="i in arr" :class="classArray[$index]" track-by="$index" v-text="i || ''"></li>
 		</ul>
+        <div v-show="!canMove" @click="reset" style="width:350px;padding:10px;border-radius:5px;background:#F59563;color: white;text-align: center;line-height: 20px;cursor:pointer;margin: 10px 0;">重来</div>
 	</div>
 	<script src="vue.min.js"></script>
 
@@ -37,8 +38,9 @@
 		new Vue({
   			el:'#app',
   			data: {
-				arr:[2,2,4,4,2,0,0,0,0,0,0,0,2,0,0,0],
-                classArray:[]
+				arr:[2,0,0,2,0,0,0,0,0,0,0,0,0,4,0,0],
+                classArray:[],
+                canMove:true
   			},
             computed:{
                 classArray:function(){
@@ -46,7 +48,6 @@
                     this.arr.forEach(function(it,i){
                         ar[i] = 'cell-'+it;
                     });
-                    console.log(ar);
                     return ar;
                 }
             },
@@ -59,6 +60,9 @@
                         if(arr[i] == arr[i+1] ){
                             arr[i] = arr[i]*2;
                             arr.splice(i+1,1);
+                            if(arr[i] == 2048){
+                                alert('恭喜您，过关了')
+                            }
                         }
                     }
                     return arr;
@@ -75,10 +79,17 @@
                     if(this.arr.every(function(it){
                         return it>0;
                     })){
-                        // alert('你挂了');
+                        this.canMove = this.arr.some(function(it,i){
+                            return ((i+1)%4!=0 && this.arr[i]==this.arr[i+1]) || (i<12 && this.arr[i]==this.arr[i+4]);
+                        }.bind(this))
+                        if(!this.canMove) alert('别挣扎了,你挂了');
                     }else{
                         this.random();
                     }
+                },
+                reset:function(){
+                    this.canMove = true;
+                    this.arr = [2,0,0,2,0,0,0,0,0,0,0,0,0,4,0,0];
                 }
   			},
   			ready:function(){
