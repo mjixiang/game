@@ -8,6 +8,8 @@
         body{font-family:"Clear Sans", "Helvetica Neue", Arial, sans-serif;}
 		ul{width:360px;height:360px;margin:0;padding:0;list-style:none;background:#BBADA0;padding:5px;border-radius:5px;}
 		li{float:left;width:80px;height:80px;line-height:80px;text-align:center;font-size:30px;font-weight:bold;margin:5px;border-radius:8px;background:#CDC1B4;}
+        [v-cloak] { display: none }
+        .reset{width:350px;padding:10px;border-radius:5px;text-align:center;line-height:20px;cursor:pointer;margin:10px 0;}
         .cell-2{background:#EEE4DA;color:#776E65;}
         .cell-4{background:#EDE0C8;color:#776E65;}
 	    .cell-8{background:#F2B179;color:#F9F6F2;}
@@ -20,39 +22,37 @@
         .cell-1024{background:#edc53f;color:#F9F6F2;}
         .cell-2048{background:#edc22e;color:#F9F6F2;}
         .cell-4096{background:#EDCF72;color:#F9F6F2;}
-
     </style>
 </head>
 <body>
 	<div id="app">
 		<ul>
-			<li v-for="i in arr" :class="classArray[$index]" track-by="$index" v-text="i || ''"></li>
+			<li v-for="i in cells" :class="classArray[$index]" track-by="$index" v-text="i || ''"></li>
 		</ul>
-        <div v-show="!canMove" @click="reset" style="width:350px;padding:10px;border-radius:5px;background:#F59563;color: white;text-align: center;line-height: 20px;cursor:pointer;margin: 10px 0;">重来</div>
+        <div v-show="!canMove" @click="reset" class="reset cell-16" v-cloak>重来</div>
 	</div>
 	<script src="vue.min.js"></script>
-
 	<script>
-        Vue.config.devtools = true;
-		//示例js
 		new Vue({
   			el:'#app',
   			data: {
-				arr:[2,0,0,2,0,0,0,0,0,0,0,0,0,4,0,0],
+				cells:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                 classArray:[],
-                canMove:true
+                canMove:true,
+                preCellString:''
   			},
             computed:{
                 classArray:function(){
                     var ar = []
-                    this.arr.forEach(function(it,i){
+                    this.cells.forEach(function(it,i){
                         ar[i] = 'cell-'+it;
                     });
                     return ar;
                 }
             },
   			methods:{
-                exchangeData:function(arr){
+                exchangeData:function(a,b,c,d){
+                    var arr = [this.cells[a],this.cells[b],this.cells[c],this.cells[d]];
                     arr = arr.filter(function(it){
                         return it>0;
                     })
@@ -65,71 +65,70 @@
                             }
                         }
                     }
-                    return arr;
+                    this.cells.$set(a,arr[0] || 0);
+                    this.cells.$set(b,arr[1] || 0);
+                    this.cells.$set(c,arr[2] || 0);
+                    this.cells.$set(d,arr[3] || 0);
                 },
                 random:function(){
                     var a = [];
-                    this.arr.forEach(function(it,i){
+                    this.cells.forEach(function(it,i){
                         it==0 && a.push(i)
                     });
                     var r = Math.floor(Math.random()*a.length);
-                    this.arr.$set(a[r],Math.random()>0.7?4:2);
+                    this.cells.$set(a[r],Math.random()>0.7?4:2);
                 },
-                doNext:function(){
-                    if(this.arr.every(function(it){
+                nextDo:function(){
+                    if(this.cells.every(function(it){
                         return it>0;
                     })){
-                        this.canMove = this.arr.some(function(it,i){
-                            return ((i+1)%4!=0 && this.arr[i]==this.arr[i+1]) || (i<12 && this.arr[i]==this.arr[i+4]);
+                        this.canMove = this.cells.some(function(it,i){
+                            return ((i+1)%4!=0 && this.cells[i]==this.cells[i+1]) || (i<12 && this.cells[i]==this.cells[i+4]);
                         }.bind(this))
                         if(!this.canMove) alert('别挣扎了,你挂了');
                     }else{
-                        this.random();
+                        if(this.preCellString != this.cells.toString()){
+                            this.random();
+                        }
                     }
+                },
+                preDo:function(){
+                    this.preCellString = this.cells.toString();
                 },
                 reset:function(){
                     this.canMove = true;
-                    this.arr = [2,0,0,2,0,0,0,0,0,0,0,0,0,4,0,0];
+                    this.cells = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+                    this.random();
+                    this.random();
                 }
   			},
   			ready:function(){
+                this.reset();
   				window.onkeydown = function(e){
   					if(e.keyCode == 37 || e.keyCode == 65){			//左
+                        this.preDo();
                         for(var i=0;i<16;i+=4){
-                            var a = this.exchangeData([this.arr[i],this.arr[i+1],this.arr[i+2],this.arr[i+3]]);
-                            this.arr.$set(i,a[0] || 0);
-                            this.arr.$set(i+1,a[1] || 0);
-                            this.arr.$set(i+2,a[2] || 0);
-                            this.arr.$set(i+3,a[3] || 0);
+                            this.exchangeData(i,i+1,i+2,i+3);
                         }
-                        this.doNext();
+                        this.nextDo();
   					}else if(e.keyCode == 38 || e.keyCode == 87){	//上
+                        this.preDo();
                         for(var i=0;i<4;i++){
-                            var a = this.exchangeData([this.arr[i],this.arr[i+4],this.arr[i+8],this.arr[i+12]]);
-                            this.arr.$set(i,a[0] || 0);
-                            this.arr.$set(i+4,a[1] || 0);
-                            this.arr.$set(i+8,a[2] || 0);
-                            this.arr.$set(i+12,a[3] || 0);
+                            this.exchangeData(i,i+4,i+8,i+12);
                         }
-                        this.doNext();
+                        this.nextDo();
   					}else if(e.keyCode == 39 || e.keyCode == 68){	//右
+                        this.preDo();
   						for(var i=0;i<16;i+=4){
-                            var a = this.exchangeData([this.arr[i+3],this.arr[i+2],this.arr[i+1],this.arr[i]]);
-                            this.arr.$set(i,a[3] || 0);
-                            this.arr.$set(i+1,a[2] || 0);
-                            this.arr.$set(i+2,a[1] || 0);
-                            this.arr.$set(i+3,a[0] || 0);
+                            this.exchangeData(i+3,i+2,i+1,i);
                         }
-                        this.doNext();
+                        this.nextDo();
   					}else if(e.keyCode == 40 || e.keyCode == 83){	//下
+                        this.preDo();
                         for(var i=0;i<4;i++){
-                            var a = this.exchangeData([this.arr[i+12],this.arr[i+8],this.arr[i+4],this.arr[i]]);
-                            this.arr.$set(i,a[3] || 0);
-                            this.arr.$set(i+4,a[2] || 0);
-                            this.arr.$set(i+8,a[1] || 0);
-                            this.arr.$set(i+12,a[0] || 0);
+                            this.exchangeData(i+12,i+8,i+4,i);
                         }
-                        this.doNext();
+                        this.nextDo();
   					}
   				}.bind(this)
   			}
