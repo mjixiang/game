@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
 	<title>2048</title>
+    <script src="vue.min.js"></script>
+    <script src="hammer.min.js"></script>
+    <script src="vue-touch.js"></script>
 	<style>
         body{font-family:"Clear Sans", "Helvetica Neue", Arial, sans-serif;}
 		ul{width:360px;height:360px;margin:0;padding:0;list-style:none;background:#BBADA0;padding:5px;border-radius:5px;}
@@ -26,12 +29,11 @@
 </head>
 <body>
 	<div id="app">
-		<ul>
+		<ul v-touch:swipeleft="onSwipeLeft" v-touch:swiperight="onSwipeRight" v-touch:swipeup="onSwipeUp" v-touch:swipedown="onSwipeDown">
 			<li v-for="i in cells" :class="classArray[$index]" track-by="$index" v-text="i || ''"></li>
 		</ul>
         <div v-show="!canMove" @click="reset" class="reset cell-16" v-cloak>重来</div>
 	</div>
-	<script src="vue.min.js"></script>
 	<script>
 		new Vue({
   			el:'#app',
@@ -100,35 +102,47 @@
                     this.cells = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
                     this.random();
                     this.random();
+                },
+                onSwipeLeft:function(){
+                    this.preDo();
+                    for(var i=0;i<16;i+=4){
+                        this.exchangeData(i,i+1,i+2,i+3);
+                    }
+                    this.nextDo();
+                },
+                onSwipeUp:function(){
+                    this.preDo();
+                    for(var i=0;i<4;i++){
+                        this.exchangeData(i,i+4,i+8,i+12);
+                    }
+                    this.nextDo();
+                },
+                onSwipeRight:function(){
+                    this.preDo();
+                    for(var i=0;i<16;i+=4){
+                        this.exchangeData(i+3,i+2,i+1,i);
+                    }
+                    this.nextDo();
+                },
+                onSwipeDown:function(){
+                    this.preDo();
+                    for(var i=0;i<4;i++){
+                        this.exchangeData(i+12,i+8,i+4,i);
+                    }
+                    this.nextDo();
                 }
   			},
   			ready:function(){
                 this.reset();
   				window.onkeydown = function(e){
   					if(e.keyCode == 37 || e.keyCode == 65){			//左
-                        this.preDo();
-                        for(var i=0;i<16;i+=4){
-                            this.exchangeData(i,i+1,i+2,i+3);
-                        }
-                        this.nextDo();
+                        this.onSwipeLeft();
   					}else if(e.keyCode == 38 || e.keyCode == 87){	//上
-                        this.preDo();
-                        for(var i=0;i<4;i++){
-                            this.exchangeData(i,i+4,i+8,i+12);
-                        }
-                        this.nextDo();
+                        this.onSwipeUp();
   					}else if(e.keyCode == 39 || e.keyCode == 68){	//右
-                        this.preDo();
-  						for(var i=0;i<16;i+=4){
-                            this.exchangeData(i+3,i+2,i+1,i);
-                        }
-                        this.nextDo();
+                        this.onSwipeRight();
   					}else if(e.keyCode == 40 || e.keyCode == 83){	//下
-                        this.preDo();
-                        for(var i=0;i<4;i++){
-                            this.exchangeData(i+12,i+8,i+4,i);
-                        }
-                        this.nextDo();
+                        this.onSwipeDown();
   					}
   				}.bind(this)
   			}
